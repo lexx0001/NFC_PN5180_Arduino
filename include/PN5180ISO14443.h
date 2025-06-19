@@ -1,0 +1,59 @@
+// NAME: PN5180ISO14443.h
+//
+// DESC: ISO14443 protocol on NXP Semiconductors PN5180 module for Arduino.
+//
+// Copyright (c) 2019 by Dirk Carstensen. All rights reserved.
+//
+// This file is part of the PN5180 library for the Arduino environment.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+#ifndef PN5180ISO14443_H
+#define PN5180ISO14443_H
+
+#include "PN5180.h"
+
+class PN5180ISO14443 : public PN5180
+{
+
+public:
+  PN5180ISO14443(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin);
+
+private:
+  uint16_t rxBytesReceived();
+
+public:
+  // Mifare TypeA
+  uint8_t activateTypeA(uint8_t *buffer, uint8_t kind);
+  
+  bool mifareBlockRead(uint8_t blockno, uint8_t *buffer);
+  uint8_t mifareBlockWrite16(uint8_t blockno, uint8_t *buffer);
+  uint8_t mifareUltralightWrite(uint8_t block, uint8_t *data4);
+  bool mifareHalt();
+  bool mifareUltralightPwdAuth(uint8_t *pwd, uint8_t *pack_out);
+
+  /*
+   * Helper functions
+   */
+public:
+  bool setupRF();
+  uint8_t readCardSerial(uint8_t *buffer);
+  uint8_t readCardSerial_ATQA_SAK(uint8_t *buffer);
+  bool isCardPresent();
+  bool writeProtectedBlock(uint8_t blockno, uint8_t *buffer);
+  bool mifareGetVersion(uint8_t *versionBuffer);
+  bool mifareReadSignature(uint8_t *sigBuffer);
+  bool mifarePwdAuth(uint8_t *pwd, uint8_t *pack);
+  bool transceiveRF(uint8_t *txData, uint8_t txLen, uint8_t *rxData, uint8_t maxRxLen, uint8_t *actualRxLen);
+  bool readSignature(uint8_t* sigBuf, uint8_t& nak);
+};
+
+#endif /* PN5180ISO14443_H */
