@@ -655,45 +655,45 @@ void PN5180::showIRQStatus(uint32_t irqStatus)
   Serial.print(irqStatus, HEX);
   Serial.print(": [ ");
   if (irqStatus & (1UL << 0))
-    Serial.print(F("RQ "));
+    Serial.print(F("RQ ")); // RQ - Request - запрос на выполнение команды
   if (irqStatus & (1UL << 1))
-    Serial.print(F("TX "));
+    Serial.print(F("TX ")); // TX - передача данных
   if (irqStatus & (1UL << 2))
-    Serial.print(F("IDLE "));
-  if (irqStatus & (1UL << 3))
-    Serial.print(F("MODE_DETECTED "));
-  if (irqStatus & (1UL << 4))
-    Serial.print(F("CARD_ACTIVATED "));
+    Serial.print(F("IDLE ")); // Ожидание (Idle) - режим ожидания, когда нет активных команд
+  if (irqStatus & (1UL << 3)) 
+    Serial.print(F("MODE_DETECTED ")); // MODE_DETECTED - обнаружение режима работы (например, режим чтения карты)
+  if (irqStatus & (1UL << 4)) 
+    Serial.print(F("CARD_ACTIVATED ")); // CARD_ACTIVATED - карта активирована
   if (irqStatus & (1UL << 5))
-    Serial.print(F("STATE_CHANGE "));
+    Serial.print(F("STATE_CHANGE ")); // STATE_CHANGE - изменение состояния
   if (irqStatus & (1UL << 6))
-    Serial.print(F("RFOFF_DET "));
+    Serial.print(F("RFOFF_DET ")); // RFOFF_DET - обнаружение выключения радиочастотного поля
   if (irqStatus & (1UL << 7))
-    Serial.print(F("RFON_DET "));
+    Serial.print(F("RFON_DET ")); // RFON_DET - обнаружение включения радиочастотного поля
   if (irqStatus & (1UL << 8))
-    Serial.print(F("TX_RFOFF "));
+    Serial.print(F("TX_RFOFF ")); // TX_RFOFF - радиочастотное поле выключено
   if (irqStatus & (1UL << 9))
-    Serial.print(F("TX_RFON "));
+    Serial.print(F("TX_RFON ")); // TX_RFON - радиочастотное поле включено
   if (irqStatus & (1UL << 10))
-    Serial.print(F("RF_ACTIVE_ERROR "));
+    Serial.print(F("RF_ACTIVE_ERROR ")); // RF Active Error - ошибка активного режима радиочастотной цепи
   if (irqStatus & (1UL << 11))
-    Serial.print(F("TIMER0 "));
+    Serial.print(F("TIMER0 ")); 
   if (irqStatus & (1UL << 12))
-    Serial.print(F("TIMER1 "));
+    Serial.print(F("TIMER1 ")); 
   if (irqStatus & (1UL << 13))
-    Serial.print(F("TIMER2 "));
-  if (irqStatus & (1UL << 14))
-    Serial.print(F("RX_SOF_DET "));
+    Serial.print(F("TIMER2 ")); 
+  if (irqStatus & (1UL << 14)) 
+    Serial.print(F("RX_SOF_DET ")); // RX_SOF_DET Start of Frame Detection - обнаружение начала кадра 
   if (irqStatus & (1UL << 15))
-    Serial.print(F("RX_SC_DET "));
+    Serial.print(F("RX_SC_DET ")); // RX Short Circuit Detection - обнаружение короткого замыкания в цепи приёмника
   if (irqStatus & (1UL << 16))
-    Serial.print(F("TEMPSENS_ERROR "));
+    Serial.print(F("TEMPSENS_ERROR ")); // Temperature Sensor Error - ошибка датчика температуры
   if (irqStatus & (1UL << 17))
-    Serial.print(F("GENERAL_ERROR "));
-  if (irqStatus & (1UL << 18))
-    Serial.print(F("HV_ERROR "));
+    Serial.print(F("GENERAL_ERROR ")); 
+  if (irqStatus & (1UL << 18)) 
+    Serial.print(F("HV_ERROR ")); // High Voltage Error - ошибка высокого напряжения в цепи питания PN5180
   if (irqStatus & (1UL << 19))
-    Serial.print(F("LPCD "));
+    Serial.print(F("LPCD ")); // Low Power Card Detection - обнаружение карты в режиме низкого энергопотребления
   Serial.println("]");
 }
 

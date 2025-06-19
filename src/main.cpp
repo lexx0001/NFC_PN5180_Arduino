@@ -42,7 +42,10 @@ uint8_t productVersion[2];
 
 void setup()
 {
-  pinMode(PIN_TRIGGER, OUTPUT);
+  pinMode(PIN_TRIGGER, OUTPUT); // Назначаем пин питания PN5180
+  digitalWrite(PIN_TRIGGER, HIGH); // Включаем питание PN5180
+  delay(30); // Ждем 30 мс для стабилизации питания
+
   Serial.begin(9600);
 
   while (PN5180ISO14443_start() == false)
@@ -51,7 +54,7 @@ void setup()
     Serial.println(F("Please check wiring and power supply!"));
     Serial.println(F("Restarting PN5180..."));
     Serial.flush();
-    delay(1000); // wait for a second before retrying
+    delay(2000); // wait for a second before retrying
   }
 }
 
@@ -64,8 +67,8 @@ void loop()
     nfc.showIRQStatus(irqStatus);
 
     if (0 == (RX_SOF_DET_IRQ_STAT & irqStatus))
-    { // no card detected
-      Serial.println(F("*** No card detected!"));
+    { 
+      Serial.println(F("*** ERROR! So many cards in RF field, maybe? ***"));
     }
 
     nfc.reset();
@@ -74,7 +77,7 @@ void loop()
     errorFlag = false;
     delay(10);
   }
-  Serial.println(F("----------------------------------"));
+  Serial.println(F("------------------------------------------------"));
   Serial.print(F("Loop #"));
   Serial.println(loopCnt++);
   if (!nfc.isCardPresent())
@@ -90,40 +93,30 @@ void loop()
       errorFlag = true;
     }
 
-    delay(7500);
+    delay(1500);
     return;
   }
 
   printCardSerial_ATQA_SAK();
-  delay(1000); // wait a second before next loop
+  delay(4000); // wait a second before next loop
 }
 
 // Function to start the PN5180 ISO14443
 bool PN5180ISO14443_start()
 {
-  digitalWrite(PIN_TRIGGER, LOW); // Выключаем питание PN5180
-  Serial.println(F("=================================="));
+  // digitalWrite(PIN_TRIGGER, LOW); // Выключаем питание PN5180
+  Serial.println(F("================================================"));
   Serial.println(F("Uploaded: " __DATE__ " " __TIME__));
-  Serial.println(F("PN5180 ISO14443 Demo Sketch"));
+  Serial.println(F("PN5180 ISO14443 Sketch for Mifare Ultralight EV1"));
 
-  Serial.println(F("----------------------------------"));
-  Serial.println(F("PN5180 Power ON..."));
-
-  delay(200);
-
-  digitalWrite(PIN_TRIGGER, HIGH); // Включаем питание PN5180
-  delay(30);                       // Ждем 100 мс
-
+  Serial.println(F("------------------------------------------------"));
   nfc.begin();
-
-  Serial.println(F("----------------------------------"));
   Serial.println(F("PN5180 Hard-Reset..."));
   nfc.reset();
-
-  Serial.println(F("----------------------------------"));
-  Serial.println(F("Reading product version..."));
+  Serial.println(F("------------------------------------------------"));
+  Serial.println(F("Reading PN5180 version..."));
   nfc.readEEprom(PRODUCT_VERSION, productVersion, sizeof(productVersion));
-  Serial.print(F("Product version="));
+  Serial.print(F("PN5180 version="));
   Serial.print(productVersion[1]);
   Serial.print(".");
   Serial.println(productVersion[0]);
@@ -134,25 +127,25 @@ bool PN5180ISO14443_start()
     return false; // return error
   }
 
-  Serial.println(F("----------------------------------"));
-  Serial.println(F("Reading firmware version..."));
+  Serial.println(F("------------------------------------------------"));
+  Serial.println(F("Reading firmware PN5180 version..."));
   uint8_t firmwareVersion[2];
   nfc.readEEprom(FIRMWARE_VERSION, firmwareVersion, sizeof(firmwareVersion));
-  Serial.print(F("Firmware version="));
+  Serial.print(F("Firmware PN5180 version="));
   Serial.print(firmwareVersion[1]);
   Serial.print(".");
   Serial.println(firmwareVersion[0]);
 
-  Serial.println(F("----------------------------------"));
-  Serial.println(F("Reading EEPROM version..."));
+  Serial.println(F("------------------------------------------------"));
+  Serial.println(F("Reading EEPROM PN5180 version..."));
   uint8_t eepromVersion[2];
   nfc.readEEprom(EEPROM_VERSION, eepromVersion, sizeof(eepromVersion));
-  Serial.print(F("EEPROM version="));
+  Serial.print(F("EEPROM PN5180 version="));
   Serial.print(eepromVersion[1]);
   Serial.print(".");
   Serial.println(eepromVersion[0]);
 
-  Serial.println(F("----------------------------------"));
+  Serial.println(F("------------------------------------------------"));
   Serial.println(F("Enable RF field..."));
   nfc.setupRF();
 
@@ -164,7 +157,8 @@ bool PN5180ISO14443_start()
 void printCardSerial_ATQA_SAK()
 {
   uint8_t buffer[10] = {0}; // 0-1: ATQA, 2: SAK, 3-9: UID
-  uint8_t uidLength = nfc.readCardSerial_ATQA_SAK(buffer);
+  // uint8_t uidLength = nfc.readCardSerial_ATQA_SAK(buffer);
+   uint8_t uidLength = nfc.readCardSerial(buffer);
 
   if (!uidLength)
   {
@@ -195,5 +189,5 @@ void printCardSerial_ATQA_SAK()
   snprintf(atqaStr, sizeof(atqaStr), "ATQA: 0x%02X%02X", buffer[1], buffer[0]); // порядок [1][0] = High:Low
   Serial.println(atqaStr);
 
-  Serial.println(F("----------------------------------"));
+  Serial.println(F("------------------------------------------------"));
 }

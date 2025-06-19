@@ -360,8 +360,8 @@ uint8_t PN5180ISO14443::readCardSerial(uint8_t *buffer)
 		return 0;
 	if ((response[3] == 0xFF) && (response[4] == 0xFF) && (response[5] == 0xFF) && (response[6] == 0xFF))
 		return 0;
-	for (int i = 0; i < 7; i++)
-		buffer[i] = response[i + 3];
+	for (int i = 0; i < 10; i++)
+		buffer[i] = response[i];
 
 	mifareHalt();
 	return uidLength;
@@ -391,9 +391,7 @@ uint8_t PN5180ISO14443::readCardSerial_ATQA_SAK(uint8_t *buffer)
 		buffer[i] = response[i];
 	};
 
-	
-
-	// Читаем версию
+		// Читаем версию
 	uint8_t versionData[8];
 	if (mifareGetVersion(versionData))
 	{
@@ -514,32 +512,32 @@ uint8_t PN5180ISO14443::readCardSerial_ATQA_SAK(uint8_t *buffer)
 bool PN5180ISO14443::isCardPresent()
 {
 	uint8_t buffer[10];
-	return (readCardSerial_ATQA_SAK(buffer) >= 4);
+	return (readCardSerial(buffer) >= 4);
 }
 
-bool PN5180ISO14443::mifareUltralightPwdAuth(uint8_t *pwd, uint8_t *pack_out)
-{
-	uint8_t cmd[5];
-	cmd[0] = 0x1B;			 // Команда PWD_AUTH
-	memcpy(&cmd[1], pwd, 4); // Копируем 4 байта пароля в команду
+// bool PN5180ISO14443::mifareUltralightPwdAuth(uint8_t *pwd, uint8_t *pack_out)
+// {
+// 	uint8_t cmd[5];
+// 	cmd[0] = 0x1B;			 // Команда PWD_AUTH
+// 	memcpy(&cmd[1], pwd, 4); // Копируем 4 байта пароля в команду
 
-	if (!sendData(cmd, 5, 0x00))
-		return false; // Ошибка отправки
+// 	if (!sendData(cmd, 5, 0x00))
+// 		return false; // Ошибка отправки
 
-	delay(5); // Небольшая задержка (чтобы карта успела подумать)
+// 	delay(5); // Небольшая задержка (чтобы карта успела подумать)
 
-	uint8_t response[2];
-	if (!readData(2, response))
-		return false; // Не получили ответ
+// 	uint8_t response[2];
+// 	if (!readData(2, response))
+// 		return false; // Не получили ответ
 
-	if (pack_out)
-	{
-		pack_out[0] = response[0]; // PACK[0]
-		pack_out[1] = response[1]; // PACK[1]
-	}
+// 	if (pack_out)
+// 	{
+// 		pack_out[0] = response[0]; // PACK[0]
+// 		pack_out[1] = response[1]; // PACK[1]
+// 	}
 
-	return true; // Успешная аутентификация
-}
+// 	return true; // Успешная аутентификация
+// }
 
 bool PN5180ISO14443::readSignature(uint8_t *sigBuf, uint8_t &nak)
 {
@@ -554,52 +552,52 @@ bool PN5180ISO14443::readSignature(uint8_t *sigBuf, uint8_t &nak)
 	return true;
 }
 
-bool PN5180ISO14443::writeProtectedBlock(uint8_t blockno, uint8_t *buffer)
-{
-	uint8_t pwd[4] = {0x00, 0x00, 0x00, 0x00}; // Установленный пароль
-	uint8_t expectedPACK[2] = {0x00, 0x00};	   // PACK, который ты записал ранее
-	uint8_t packOut[2] = {0};
+// bool PN5180ISO14443::writeProtectedBlock(uint8_t blockno, uint8_t *buffer)
+// {
+// 	uint8_t pwd[4] = {0x00, 0x00, 0x00, 0x00}; // Установленный пароль
+// 	uint8_t expectedPACK[2] = {0x00, 0x00};	   // PACK, который ты записал ранее
+// 	uint8_t packOut[2] = {0};
 
-	// Шаг 1: Аутентификация
-	if (!mifareUltralightPwdAuth(pwd, packOut))
-	{
-		Serial.println(F("PWD_AUTH провален!"));
-		return false;
-	}
+// 	// Шаг 1: Аутентификация
+// 	if (!mifareUltralightPwdAuth(pwd, packOut))
+// 	{
+// 		Serial.println(F("PWD_AUTH провален!"));
+// 		return false;
+// 	}
 
-	// Шаг 2: Проверим PACK
-	if (packOut[0] != expectedPACK[0] || packOut[1] != expectedPACK[1])
-	{
-		Serial.print(F("PACK неверный! Получено: "));
-		Serial.print(packOut[0], HEX);
-		Serial.print(" ");
-		Serial.println(packOut[1], HEX);
-		return false;
-	}
+// 	// Шаг 2: Проверим PACK
+// 	if (packOut[0] != expectedPACK[0] || packOut[1] != expectedPACK[1])
+// 	{
+// 		Serial.print(F("PACK неверный! Получено: "));
+// 		Serial.print(packOut[0], HEX);
+// 		Serial.print(" ");
+// 		Serial.println(packOut[1], HEX);
+// 		return false;
+// 	}
 
-	Serial.println(F("Аутентификация успешна! Пишем блок..."));
+// 	Serial.println(F("Аутентификация успешна! Пишем блок..."));
 
-	// Шаг 3: Запись блока, переданного через blockno
-	if (!mifareUltralightWrite(blockno, buffer))
-	{
-		Serial.println(F("Ошибка записи защищённого блока!"));
-		return false;
-	}
+// 	// Шаг 3: Запись блока, переданного через blockno
+// 	if (!mifareUltralightWrite(blockno, buffer))
+// 	{
+// 		Serial.println(F("Ошибка записи защищённого блока!"));
+// 		return false;
+// 	}
 
-	// Шаг 4: Отладочный вывод
-	Serial.print(F("Блок 0x"));
-	Serial.print(blockno, HEX);
-	Serial.print(F(" записан: "));
-	for (int i = 0; i < 4; i++)
-	{
-		Serial.print(buffer[i], HEX);
-		if (i < 3)
-			Serial.print(":");
-	}
-	Serial.println();
+// 	// Шаг 4: Отладочный вывод
+// 	Serial.print(F("Блок 0x"));
+// 	Serial.print(blockno, HEX);
+// 	Serial.print(F(" записан: "));
+// 	for (int i = 0; i < 4; i++)
+// 	{
+// 		Serial.print(buffer[i], HEX);
+// 		if (i < 3)
+// 			Serial.print(":");
+// 	}
+// 	Serial.println();
 
-	return true;
-}
+// 	return true;
+// }
 
 bool PN5180ISO14443::mifareGetVersion(uint8_t *versionBuffer)
 {

@@ -38,7 +38,7 @@ public:
   uint8_t mifareBlockWrite16(uint8_t blockno, uint8_t *buffer);
   uint8_t mifareUltralightWrite(uint8_t block, uint8_t *data4);
   bool mifareHalt();
-  bool mifareUltralightPwdAuth(uint8_t *pwd, uint8_t *pack_out);
+  // bool mifareUltralightPwdAuth(uint8_t *pwd, uint8_t *pack_out);
 
   /*
    * Helper functions
@@ -48,7 +48,7 @@ public:
   uint8_t readCardSerial(uint8_t *buffer);
   uint8_t readCardSerial_ATQA_SAK(uint8_t *buffer);
   bool isCardPresent();
-  bool writeProtectedBlock(uint8_t blockno, uint8_t *buffer);
+  // bool writeProtectedBlock(uint8_t blockno, uint8_t *buffer);
   bool mifareGetVersion(uint8_t *versionBuffer);
   bool mifareReadSignature(uint8_t *sigBuffer);
   bool mifarePwdAuth(uint8_t *pwd, uint8_t *pack);
