@@ -35,7 +35,6 @@ public:
   uint8_t activateTypeA(uint8_t *buffer, uint8_t kind);
   
   bool mifareBlockRead(uint8_t blockno, uint8_t *buffer);
-  uint8_t mifareBlockWrite16(uint8_t blockno, uint8_t *buffer);
   uint8_t mifareUltralightWrite(uint8_t block, uint8_t *data4);
   bool mifareHalt();
   // bool mifareUltralightPwdAuth(uint8_t *pwd, uint8_t *pack_out);
@@ -46,14 +45,11 @@ public:
 public:
   bool setupRF();
   uint8_t readCardSerial(uint8_t *buffer);
-  uint8_t readCardSerial_ATQA_SAK(uint8_t *buffer);
+  uint8_t readCard_UL_EV1(uint8_t *buffer);
   bool isCardPresent();
-  // bool writeProtectedBlock(uint8_t blockno, uint8_t *buffer);
-  bool mifareGetVersion(uint8_t *versionBuffer);
-  bool mifareReadSignature(uint8_t *sigBuffer);
-  bool mifarePwdAuth(uint8_t *pwd, uint8_t *pack);
-  bool transceiveRF(uint8_t *txData, uint8_t txLen, uint8_t *rxData, uint8_t maxRxLen, uint8_t *actualRxLen);
-  bool readSignature(uint8_t* sigBuf, uint8_t& nak);
-};
+  bool mifare_UL_EV1_GetVersion(uint8_t *versionBuffer);
+  bool mifare_UL_EV1_ReadSig(uint8_t *sigBuffer);
+  bool mifare_UL_EV1_PwdAuth(uint8_t *pwd, uint8_t *pack);
+  };
 
 #endif /* PN5180ISO14443_H */

@@ -1,20 +1,19 @@
-// NAME: PN5180.cpp
+// ИМЯ: PN5180.cpp
 //
-// DESC: Implementation of PN5180 class.
+// ОПИСАНИЕ: Реализация класса PN5180.
 //
 // Copyright (c) 2018 by Andreas Trappmann. All rights reserved.
 //
-// This file is part of the PN5180 library for the Arduino environment.
+// Этот файл является частью библиотеки PN5180 для среды Arduino.
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// Эта библиотека является свободным программным обеспечением; вы можете распространять и/или
+// изменять её на условиях Стандартной общественной лицензии GNU Lesser General Public
+// License, опубликованной Free Software Foundation; либо версии 2.1 лицензии, либо (по вашему выбору) любой более поздней версии.
 //
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-// Lesser General Public License for more details.
+// Эта библиотека распространяется в надежде, что она будет полезной,
+// но БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; даже без подразумеваемой гарантии
+// КОММЕРЧЕСКОЙ ПРИГОДНОСТИ или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННОЙ ЦЕЛИ. Подробнее см. в
+// Стандартной общественной лицензии GNU Lesser General Public License.
 //
 //#define DEBUG 1
 
@@ -24,8 +23,8 @@
 
 
 
-// PN5180 1-Byte Direct Commands
-// see 11.4.3.3 Host Interface Command List
+// 1-байтовые прямые команды PN5180
+// см. 11.4.3.3 Host Interface Command List
 #define PN5180_WRITE_REGISTER           (0x00)
 #define PN5180_WRITE_REGISTER_OR_MASK   (0x01)
 #define PN5180_WRITE_REGISTER_AND_MASK  (0x02)
@@ -49,12 +48,12 @@ PN5180::PN5180(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin) {
   PN5180_RST = RSTpin;
 
   /*
-   * 11.4.1 Physical Host Interface
-   * The interface of the PN5180 to a host microcontroller is based on a SPI interface,
-   * extended by signal line BUSY. The maximum SPI speed is 7 Mbps and fixed to CPOL
-   * = 0 and CPHA = 0.
+   * 11.4.1 Физический интерфейс хоста
+   * Интерфейс PN5180 с микроконтроллером-хостом основан на интерфейсе SPI,
+   * расширенном сигнальной линией BUSY. Максимальная скорость SPI — 7 Мбит/с и фиксирована на CPOL
+   * = 0 и CPHA = 0.
    */
-  // Settings for PN5180: 7Mbps, MSB first, SPI_MODE0 (CPOL=0, CPHA=0)
+  // Настройки для PN5180: 7Мбит/с, старший бит первым, SPI_MODE0 (CPOL=0, CPHA=0)
   PN5180_SPI_SETTINGS = SPISettings(1000000, MSBFIRST, SPI_MODE0);
 }
 
@@ -63,8 +62,8 @@ void PN5180::begin() {
   pinMode(PN5180_BUSY, INPUT);
   pinMode(PN5180_RST, OUTPUT);
 
-  digitalWrite(PN5180_NSS, HIGH); // disable
-  digitalWrite(PN5180_RST, HIGH); // no reset
+  digitalWrite(PN5180_NSS, HIGH); // отключить
+  digitalWrite(PN5180_RST, HIGH); // нет сброса
 
   SPI.begin();
   PN5180DEBUG(F("SPI pinout: "));
@@ -76,15 +75,14 @@ void PN5180::begin() {
 }
 
 void PN5180::end() {
-  digitalWrite(PN5180_NSS, HIGH); // disable
+  digitalWrite(PN5180_NSS, HIGH); // отключить
   SPI.end();
 }
 
 /*
  * WRITE_REGISTER - 0x00
- * This command is used to write a 32-bit value (little endian) to a configuration register.
- * The address of the register must exist. If the condition is not fulfilled, an exception is
- * raised.
+ * Эта команда используется для записи 32-битного значения (младший байт первым) в конфигурационный регистр.
+ * Адрес регистра должен существовать. Если это условие не выполнено, возникает исключение.
  */
 bool PN5180::writeRegister(uint8_t reg, uint32_t value) {
   uint8_t *p = (uint8_t*)&value;
@@ -100,8 +98,8 @@ bool PN5180::writeRegister(uint8_t reg, uint32_t value) {
 #endif
 
   /*
-  For all 4 byte command parameter transfers (e.g. register values), the payload
-  parameters passed follow the little endian approach (Least Significant Byte first).
+  Для всех 4-байтовых передач параметров команд (например, значений регистров), параметры
+  передаются в формате младший байт первым (Little Endian).
    */
   uint8_t buf[6] = { PN5180_WRITE_REGISTER, reg, p[0], p[1], p[2], p[3] };
 
@@ -114,11 +112,10 @@ bool PN5180::writeRegister(uint8_t reg, uint32_t value) {
 
 /*
  * WRITE_REGISTER_OR_MASK - 0x01
- * This command modifies the content of a register using a logical OR operation. The
- * content of the register is read and a logical OR operation is performed with the provided
- * mask. The modified content is written back to the register.
- * The address of the register must exist. If the condition is not fulfilled, an exception is
- * raised.
+ * Эта команда изменяет содержимое регистра с помощью логической операции ИЛИ. 
+ * Содержимое регистра читается и выполняется логическая операция ИЛИ с предоставленной маской.
+ * Изменённое содержимое записывается обратно в регистр.
+ * Адрес регистра должен существовать. Если это условие не выполнено, возникает исключение.
  */
 bool PN5180::writeRegisterWithOrMask(uint8_t reg, uint32_t mask) {
   uint8_t *p = (uint8_t*)&mask;
@@ -144,11 +141,10 @@ bool PN5180::writeRegisterWithOrMask(uint8_t reg, uint32_t mask) {
 
 /*
  * WRITE _REGISTER_AND_MASK - 0x02
- * This command modifies the content of a register using a logical AND operation. The
- * content of the register is read and a logical AND operation is performed with the provided
- * mask. The modified content is written back to the register.
- * The address of the register must exist. If the condition is not fulfilled, an exception is
- * raised.
+ * Эта команда изменяет содержимое регистра с помощью логической операции И. 
+ * Содержимое регистра читается и выполняется логическая операция И с предоставленной маской.
+ * Изменённое содержимое записывается обратно в регистр.
+ * Адрес регистра должен существовать. Если это условие не выполнено, возникает исключение.
  */
 bool PN5180::writeRegisterWithAndMask(uint8_t reg, uint32_t mask) {
   uint8_t *p = (uint8_t*)&mask;
@@ -174,10 +170,9 @@ bool PN5180::writeRegisterWithAndMask(uint8_t reg, uint32_t mask) {
 
 /*
  * READ_REGISTER - 0x04
- * This command is used to read the content of a configuration register. The content of the
- * register is returned in the 4 byte response.
- * The address of the register must exist. If the condition is not fulfilled, an exception is
- * raised.
+ * Эта команда используется для чтения содержимого конфигурационного регистра. Содержимое регистра
+ * возвращается в 4-байтовом ответе.
+ * Адрес регистра должен существовать. Если это условие не выполнено, возникает исключение.
  */
 bool PN5180::readRegister(uint8_t reg, uint32_t *value) {
   PN5180DEBUG(F("Reading register 0x"));
@@ -201,26 +196,24 @@ bool PN5180::readRegister(uint8_t reg, uint32_t *value) {
  * WRITE_EEPROM - 0x06
  */
 bool PN5180::writeEEprom(uint8_t addr, uint8_t *buffer, uint8_t len) {
-	uint8_t cmd[len + 2];
-	cmd[0] = PN5180_WRITE_EEPROM;
-	cmd[1] = addr;
-	for (int i = 0; i < len; i++) cmd[2 + i] = buffer[i];
-	SPI.beginTransaction(PN5180_SPI_SETTINGS);
-	transceiveCommand(cmd, len + 2);
-	SPI.endTransaction();
-	return true;
+  uint8_t cmd[len + 2];
+  cmd[0] = PN5180_WRITE_EEPROM;
+  cmd[1] = addr;
+  for (int i = 0; i < len; i++) cmd[2 + i] = buffer[i];
+  SPI.beginTransaction(PN5180_SPI_SETTINGS);
+  transceiveCommand(cmd, len + 2);
+  SPI.endTransaction();
+  return true;
 }
 
 /*
  * READ_EEPROM - 0x07
- * This command is used to read data from EEPROM memory area. The field 'Address'
- * indicates the start address of the read operation. The field Length indicates the number
- * of bytes to read. The response contains the data read from EEPROM (content of the
- * EEPROM); The data is read in sequentially increasing order starting with the given
- * address.
- * EEPROM Address must be in the range from 0 to 254, inclusive. Read operation must
- * not go beyond EEPROM address 254. If the condition is not fulfilled, an exception is
- * raised.
+ * Эта команда используется для чтения данных из области памяти EEPROM. Поле 'Address'
+ * указывает начальный адрес операции чтения. Поле Length указывает количество
+ * байтов для чтения. Ответ содержит данные, считанные из EEPROM (содержимое
+ * EEPROM); Данные читаются последовательно, начиная с указанного адреса.
+ * Адрес EEPROM должен быть в диапазоне от 0 до 254 включительно. Операция чтения не должна
+ * выходить за пределы адреса EEPROM 254. Если это условие не выполнено, возникает исключение.
  */
 bool PN5180::readEEprom(uint8_t addr, uint8_t *buffer, int len) {
   if ((addr > 254) || ((addr+len) > 254)) {
@@ -257,18 +250,18 @@ bool PN5180::readEEprom(uint8_t addr, uint8_t *buffer, int len) {
 
 /*
  * SEND_DATA - 0x09
- * This command writes data to the RF transmission buffer and starts the RF transmission.
- * The parameter ‘Number of valid bits in last Byte’ indicates the exact number of bits to be
- * transmitted for the last byte (for non-byte aligned frames).
- * Precondition: Host shall configure the Transceiver by setting the register
- * SYSTEM_CONFIG.COMMAND to 0x3 before using the SEND_DATA command, as
- * the command SEND_DATA is only writing data to the transmission buffer and starts the
- * transmission but does not perform any configuration.
- * The size of ‘Tx Data’ field must be in the range from 0 to 260, inclusive (the 0 byte length
- * allows a symbol only transmission when the TX_DATA_ENABLE is cleared).‘Number of
- * valid bits in last Byte’ field must be in the range from 0 to 7. The command must not be
- * called during an ongoing RF transmission. Transceiver must be in ‘WaitTransmit’ state
- * with ‘Transceive’ command set. If the condition is not fulfilled, an exception is raised.
+ * Эта команда записывает данные в буфер передачи RF и запускает передачу RF.
+ * Параметр ‘Number of valid bits in last Byte’ указывает точное количество бит для передачи в последнем байте
+ * (для невыравненных по байтам кадров).
+ * Предусловие: Хост должен сконфигурировать трансивер, установив регистр
+ * SYSTEM_CONFIG.COMMAND в 0x3 перед использованием команды SEND_DATA, так как
+ * команда SEND_DATA только записывает данные в буфер передачи и запускает
+ * передачу, но не выполняет никакой конфигурации.
+ * Размер поля ‘Tx Data’ должен быть в диапазоне от 0 до 260 включительно (длина 0 байт
+ * позволяет передавать только символ, если TX_DATA_ENABLE сброшен). Поле ‘Number of
+ * valid bits in last Byte’ должно быть в диапазоне от 0 до 7. Команда не должна вызываться во время
+ * текущей передачи RF. Трансивер должен быть в состоянии ‘WaitTransmit’
+ * с установленной командой ‘Transceive’. Если это условие не выполнено, возникает исключение.
  */
 bool PN5180::sendData(uint8_t *data, int len, uint8_t validBits) {
   if (len > 260) {
@@ -289,20 +282,20 @@ bool PN5180::sendData(uint8_t *data, int len, uint8_t validBits) {
 
   uint8_t buffer[len+2];
   buffer[0] = PN5180_SEND_DATA;
-  buffer[1] = validBits; // number of valid bits of last byte are transmitted (0 = all bits are transmitted)
+  buffer[1] = validBits; // количество валидных бит в последнем байте для передачи (0 = все биты передаются)
   for (int i=0; i<len; i++) {
     buffer[2+i] = data[i];
   }
 
-  writeRegisterWithAndMask(SYSTEM_CONFIG, 0xfffffff8);  // Idle/StopCom Command
-  writeRegisterWithOrMask(SYSTEM_CONFIG, 0x00000003);   // Transceive Command
+  writeRegisterWithAndMask(SYSTEM_CONFIG, 0xfffffff8);  // Команда Idle/StopCom
+  writeRegisterWithOrMask(SYSTEM_CONFIG, 0x00000003);   // Команда Transceive
   /*
-   * Transceive command; initiates a transceive cycle.
-   * Note: Depending on the value of the Initiator bit, a
-   * transmission is started or the receiver is enabled
-   * Note: The transceive command does not finish
-   * automatically. It stays in the transceive cycle until
-   * stopped via the IDLE/StopCom command
+   * Команда Transceive; инициирует цикл передачи/приёма.
+   * Примечание: В зависимости от значения бита Initiator,
+   * начинается передача или включается приёмник
+   * Примечание: Команда transceive не завершается
+   * автоматически. Она остаётся в цикле передачи/приёма до
+   * остановки через команду IDLE/StopCom
    */
 
   PN5180TransceiveStat transceiveState = getTransceiveState();
@@ -320,13 +313,12 @@ bool PN5180::sendData(uint8_t *data, int len, uint8_t validBits) {
 
 /*
  * READ_DATA - 0x0A
- * This command reads data from the RF reception buffer, after a successful reception.
- * The RX_STATUS register contains the information to verify if the reception had been
- * successful. The data is available within the response of the command. The host controls
- * the number of bytes to be read via the SPI interface.
- * The RF data had been successfully received. In case the instruction is executed without
- * preceding an RF data reception, no exception is raised but the data read back from the
- * reception buffer is invalid. If the condition is not fulfilled, an exception is raised.
+ * Эта команда читает данные из буфера приёма RF после успешного приёма.
+ * Регистр RX_STATUS содержит информацию для проверки успешности приёма. Данные доступны
+ * в ответе на команду. Хост управляет количеством байтов для чтения через интерфейс SPI.
+ * RF-данные были успешно приняты. В случае выполнения инструкции без
+ * предшествующего приёма RF-данных, исключение не возникает, но данные, считанные из буфера приёма,
+ * будут недействительными. Если это условие не выполнено, возникает исключение.
  */
 uint8_t * PN5180::readData(int len) {
   if (len > 508) {
@@ -357,29 +349,29 @@ uint8_t * PN5180::readData(int len) {
 }
 
 bool PN5180::readData(uint8_t len, uint8_t *buffer) {
-	if (len > 508) {
-		return false;
-	}
-	uint8_t cmd[2] = { PN5180_READ_DATA, 0x00 };
-	SPI.beginTransaction(PN5180_SPI_SETTINGS);
-	bool success = transceiveCommand(cmd, 2, buffer, len);
-	SPI.endTransaction();
-	return success;
+  if (len > 508) {
+    return false;
+  }
+  uint8_t cmd[2] = { PN5180_READ_DATA, 0x00 };
+  SPI.beginTransaction(PN5180_SPI_SETTINGS);
+  bool success = transceiveCommand(cmd, 2, buffer, len);
+  SPI.endTransaction();
+  return success;
 }
 
 
 
 
-/* switch the mode to LPCD (low power card detection)
- * Parameter 'wakeupCounterInMs' must be in the range from 0x0 - 0xA82
- * max. wake-up time is 2960 ms.
+/* переключить режим на LPCD (обнаружение карты при низком энергопотреблении)
+ * Параметр 'wakeupCounterInMs' должен быть в диапазоне от 0x0 до 0xA82
+ * максимальное время пробуждения — 2960 мс.
  */
 bool PN5180::switchToLPCD(uint16_t wakeupCounterInMs) {
-  // clear all IRQ flags
+  // очистить все флаги IRQ
   clearIRQStatus(0xffffffff); 
-  // enable only LPCD and general error IRQ
+  // включить только LPCD и общий IRQ ошибок
   writeRegister(IRQ_ENABLE, LPCD_IRQ_STAT | GENERAL_ERROR_IRQ_STAT);  
-  // switch mode to LPCD 
+  // переключить режим на LPCD 
   uint8_t cmd[4] = { PN5180_SWITCH_MODE, 0x01, (uint8_t)(wakeupCounterInMs & 0xFF), (uint8_t)((wakeupCounterInMs >> 8U) & 0xFF) };
   SPI.beginTransaction(PN5180_SPI_SETTINGS);
   bool success = transceiveCommand(cmd, sizeof(cmd));
@@ -389,18 +381,16 @@ bool PN5180::switchToLPCD(uint16_t wakeupCounterInMs) {
 
 /*
  * LOAD_RF_CONFIG - 0x11
- * Parameter 'Transmitter Configuration' must be in the range from 0x0 - 0x1C, inclusive. If
- * the transmitter parameter is 0xFF, transmitter configuration is not changed.
- * Field 'Receiver Configuration' must be in the range from 0x80 - 0x9C, inclusive. If the
- * receiver parameter is 0xFF, the receiver configuration is not changed. If the condition is
- * not fulfilled, an exception is raised.
- * The transmitter and receiver configuration shall always be configured for the same
- * transmission/reception speed. No error is returned in case this condition is not taken into
- * account.
+ * Параметр 'Transmitter Configuration' должен быть в диапазоне от 0x0 до 0x1C включительно. Если
+ * параметр передатчика равен 0xFF, конфигурация передатчика не изменяется.
+ * Поле 'Receiver Configuration' должно быть в диапазоне от 0x80 до 0x9C включительно. Если
+ * параметр приёмника равен 0xFF, конфигурация приёмника не изменяется. Если это условие не выполнено, возникает исключение.
+ * Конфигурация передатчика и приёмника всегда должны быть настроены на одну и ту же
+ * скорость передачи/приёма. Ошибка не возвращается, если это условие не выполнено.
  *
- * Transmitter: RF   Protocol          Speed     Receiver: RF    Protocol    Speed
- * configuration                       (kbit/s)  configuration               (kbit/s)
- * byte (hex)                                    byte (hex)
+ * Передатчик: RF   Протокол          Скорость     Приёмник: RF    Протокол    Скорость
+ * конфигурация                        (кбит/с)    конфигурация                (кбит/с)
+ * байт (hex)                                      байт (hex)
  * ----------------------------------------------------------------------------------------------
  * ->0D              ISO 15693 ASK100  26        8D              ISO 15693   26
  *   0E              ISO 15693 ASK10   26        8E              ISO 15693   53
@@ -423,8 +413,8 @@ bool PN5180::loadRFConfig(uint8_t txConf, uint8_t rxConf) {
 
 /*
  * RF_ON - 0x16
- * This command is used to switch on the internal RF field. If enabled the TX_RFON_IRQ is
- * set after the field is switched on.
+ * Эта команда используется для включения внутреннего RF-поля. Если включено, TX_RFON_IRQ
+ * устанавливается после включения поля.
  */
 bool PN5180::setRF_on() {
   PN5180DEBUG(F("Set RF ON\n"));
@@ -435,15 +425,15 @@ bool PN5180::setRF_on() {
   transceiveCommand(cmd, 2);
   SPI.endTransaction();
 
-  while (0 == (TX_RFON_IRQ_STAT & getIRQStatus())); // wait for RF field to set up
+  while (0 == (TX_RFON_IRQ_STAT & getIRQStatus())); // ждать, пока RF-поле не будет установлено
   clearIRQStatus(TX_RFON_IRQ_STAT);
   return true;
 }
 
 /*
  * RF_OFF - 0x17
- * This command is used to switch off the internal RF field. If enabled, the TX_RFOFF_IRQ
- * is set after the field is switched off.
+ * Эта команда используется для выключения внутреннего RF-поля. Если включено, TX_RFOFF_IRQ
+ * устанавливается после выключения поля.
  */
 bool PN5180::setRF_off() {
   PN5180DEBUG(F("Set RF OFF\n"));
@@ -454,7 +444,7 @@ bool PN5180::setRF_off() {
   transceiveCommand(cmd, 2);
   SPI.endTransaction();
 
-  while (0 == (TX_RFOFF_IRQ_STAT & getIRQStatus())); // wait for RF field to shut down
+  while (0 == (TX_RFOFF_IRQ_STAT & getIRQStatus())); // ждать, пока RF-поле не выключится
   clearIRQStatus(TX_RFOFF_IRQ_STAT);
   return true;
 }
@@ -462,40 +452,40 @@ bool PN5180::setRF_off() {
 //---------------------------------------------------------------------------------------------
 
 /*
-11.4.3.1 A Host Interface Command consists of either 1 or 2 SPI frames depending whether the
-host wants to write or read data from the PN5180. An SPI Frame consists of multiple
-bytes.
+11.4.3.1 Команда интерфейса хоста состоит из 1 или 2 SPI-фреймов в зависимости от того,
+хочет ли хост записать или прочитать данные из PN5180. SPI-фрейм состоит из нескольких
+байтов.
 
-All commands are packed into one SPI Frame. An SPI Frame consists of multiple bytes.
-No NSS toggles allowed during sending of an SPI frame.
+Все команды упакованы в один SPI-фрейм. SPI-фрейм состоит из нескольких байтов.
+Во время отправки SPI-фрейма переключение NSS не допускается.
 
-For all 4 byte command parameter transfers (e.g. register values), the payload
-parameters passed follow the little endian approach (Least Significant Byte first).
+Для всех 4-байтовых передач параметров команд (например, значений регистров), параметры
+передаются в формате младший байт первым (Little Endian).
 
-Direct Instructions are built of a command code (1 Byte) and the instruction parameters
-(max. 260 bytes). The actual payload size depends on the instruction used.
-Responses to direct instructions contain only a payload field (no header).
-All instructions are bound to conditions. If at least one of the conditions is not fulfilled, an exception is
-raised. In case of an exception, the IRQ line of PN5180 is asserted and corresponding interrupt
-status register contain information on the exception.
+Прямые инструкции состоят из кода команды (1 байт) и параметров инструкции
+(максимум 260 байт). Фактический размер полезной нагрузки зависит от используемой инструкции.
+Ответы на прямые инструкции содержат только поле полезной нагрузки (без заголовка).
+Все инструкции подчиняются условиям. Если хотя бы одно из условий не выполнено, возникает исключение.
+В случае исключения линия IRQ PN5180 активируется, а соответствующий регистр состояния прерывания
+содержит информацию об исключении.
 */
 
 /*
- * A Host Interface Command consists of either 1 or 2 SPI frames depending whether the
- * host wants to write or read data from the PN5180. An SPI Frame consists of multiple
- * bytes.
- * All commands are packed into one SPI Frame. An SPI Frame consists of multiple bytes.
- * No NSS toggles allowed during sending of an SPI frame.
- * For all 4 byte command parameter transfers (e.g. register values), the payload
- * parameters passed follow the little endian approach (Least Significant Byte first).
- * The BUSY line is used to indicate that the system is BUSY and cannot receive any data
- * from a host. Recommendation for the BUSY line handling by the host:
- * 1. Assert NSS to Low
- * 2. Perform Data Exchange
- * 3. Wait until BUSY is high
- * 4. Deassert NSS
- * 5. Wait until BUSY is low
- * If there is a parameter error, the IRQ is set to ACTIVE and a GENERAL_ERROR_IRQ is set.
+ * Команда интерфейса хоста состоит из 1 или 2 SPI-фреймов в зависимости от того,
+ * хочет ли хост записать или прочитать данные из PN5180. SPI-фрейм состоит из нескольких
+ * байтов.
+ * Все команды упакованы в один SPI-фрейм. SPI-фрейм состоит из нескольких байтов.
+ * Во время отправки SPI-фрейма переключение NSS не допускается.
+ * Для всех 4-байтовых передач параметров команд (например, значений регистров), параметры
+ * передаются в формате младший байт первым (Little Endian).
+ * Линия BUSY используется для индикации того, что система занята и не может принимать данные
+ * от хоста. Рекомендации по обработке линии BUSY хостом:
+ * 1. Установить NSS в LOW
+ * 2. Выполнить обмен данными
+ * 3. Ждать, пока BUSY станет HIGH
+ * 4. Установить NSS в HIGH
+ * 5. Ждать, пока BUSY станет LOW
+ * Если есть ошибка параметра, IRQ устанавливается в ACTIVE и устанавливается GENERAL_ERROR_IRQ.
  */
 bool PN5180::transceiveCommand(uint8_t *sendBuffer, size_t sendBufferLen, uint8_t *recvBuffer, size_t recvBufferLen) {
 #ifdef DEBUG
@@ -511,7 +501,7 @@ bool PN5180::transceiveCommand(uint8_t *sendBuffer, size_t sendBufferLen, uint8_
   unsigned long startedWaiting = millis();
   while (LOW != digitalRead(PN5180_BUSY)) {
     if (millis() - startedWaiting > commandTimeout) return false;
-  }; // wait until busy is low
+  }; // ждать, пока busy не станет low
   // 1.
   digitalWrite(PN5180_NSS, LOW); delay(2);
   // 2.
@@ -522,16 +512,16 @@ bool PN5180::transceiveCommand(uint8_t *sendBuffer, size_t sendBufferLen, uint8_
   startedWaiting = millis();
   while (HIGH != digitalRead(PN5180_BUSY)) {
     if (millis() - startedWaiting > commandTimeout) return false;
-  }; // wait until busy is high
+  }; // ждать, пока busy не станет high
   // 4.
   digitalWrite(PN5180_NSS, HIGH); delay(1);
   // 5.
   startedWaiting = millis();
   while (LOW != digitalRead(PN5180_BUSY)) {
     if (millis() - startedWaiting > commandTimeout) return false;
-  }; // wait until busy is low
+  }; // ждать, пока busy не станет low
 
-  // check, if write-only
+  // проверить, только ли запись
   //
   if ((0 == recvBuffer) || (0 == recvBufferLen)) return true;
   PN5180DEBUG(F("Receiving SPI frame...\n"));
@@ -546,14 +536,14 @@ bool PN5180::transceiveCommand(uint8_t *sendBuffer, size_t sendBufferLen, uint8_
   startedWaiting = millis();
   while (HIGH != digitalRead(PN5180_BUSY)) {
     if (millis() - startedWaiting > commandTimeout) return false;
-  }; // wait until busy is high
+  }; // ждать, пока busy не станет high
   // 4.
   digitalWrite(PN5180_NSS, HIGH); delay(1);
   // 5.
   startedWaiting = millis();
   while (LOW != digitalRead(PN5180_BUSY)) {
     if (millis() - startedWaiting > commandTimeout) return false;
-  }; // wait until busy is low
+  }; // ждать, пока busy не станет low
 
 #ifdef DEBUG
   PN5180DEBUG(F("Received: "));
@@ -568,25 +558,25 @@ bool PN5180::transceiveCommand(uint8_t *sendBuffer, size_t sendBufferLen, uint8_
 }
 
 
-/* Function moved to PN5180ISO14443.cpp */
+/* Функция перемещена в PN5180ISO14443.cpp */
 
 /*
- * Reset NFC device
+ * Сбросить NFC-устройство
  */
 void PN5180::reset() {
-  digitalWrite(PN5180_RST, LOW);  // at least 10us required
+  digitalWrite(PN5180_RST, LOW);  // требуется не менее 10 мкс
   delay(200);
-  digitalWrite(PN5180_RST, HIGH); // 2ms to ramp up required
+  digitalWrite(PN5180_RST, HIGH); // требуется 2 мс для запуска
   delay(200);
 
-  while (0 == (IDLE_IRQ_STAT & getIRQStatus())); // wait for system to start up
+  while (0 == (IDLE_IRQ_STAT & getIRQStatus())); // ждать запуска системы
 
-  clearIRQStatus(0xffffffff); // clear all flags
+  clearIRQStatus(0xffffffff); // очистить все флаги
 }
 
 /**
  * @name  getInterrupt
- * @desc  read interrupt status register and clear interrupt status
+ * @desc  прочитать регистр состояния прерывания и очистить его
  */
 uint32_t PN5180::getIRQStatus() {
 
@@ -611,7 +601,7 @@ bool PN5180::clearIRQStatus(uint32_t irqMask) {
 }
 
 /*
- * Get TRANSCEIVE_STATE from RF_STATUS register
+ * Получить TRANSCEIVE_STATE из регистра RF_STATUS
  */
 #ifdef DEBUG
 extern void showIRQStatus(uint32_t);
@@ -630,15 +620,15 @@ PN5180TransceiveStat PN5180::getTransceiveState() {
   }
 
   /*
-   * TRANSCEIVE_STATEs:
-   *  0 - idle
-   *  1 - wait transmit
-   *  2 - transmitting
-   *  3 - wait receive
-   *  4 - wait for data
-   *  5 - receiving
-   *  6 - loopback
-   *  7 - reserved
+   * TRANSCEIVE_STATE:
+   *  0 - idle (ожидание)
+   *  1 - wait transmit (ожидание передачи)
+   *  2 - transmitting (передача)
+   *  3 - wait receive (ожидание приёма)
+   *  4 - wait for data (ожидание данных)
+   *  5 - receiving (приём)
+   *  6 - loopback (замкнутый цикл)
+   *  7 - зарезервировано
    */
   uint8_t state = ((rfStatus >> 24) & 0x07);
   PN5180DEBUG(F("TRANSCEIVE_STATE=0x"));
@@ -648,7 +638,7 @@ PN5180TransceiveStat PN5180::getTransceiveState() {
   return PN5180TransceiveStat(state);
 }
 
-// Function to show IRQ status in a human-readable format
+// Функция для отображения состояния IRQ в человекочитаемом виде
 void PN5180::showIRQStatus(uint32_t irqStatus)
 {
   Serial.print(F("IRQ-Status 0x"));
@@ -712,4 +702,3 @@ uint8_t PN5180::readRFResponse(uint8_t* buffer, uint8_t maxLen) {
 
     return ok ? len : 0;
 }
-

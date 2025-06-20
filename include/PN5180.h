@@ -131,13 +131,11 @@ public:
    */
 public:
   void reset();
-  bool readSignature(uint8_t *sigBuf, uint8_t &nak);
   uint8_t commandTimeout = 50;
   uint32_t getIRQStatus();
   bool clearIRQStatus(uint32_t irqMask);
   void showIRQStatus(uint32_t irqStatus);
   PN5180TransceiveStat getTransceiveState();
-  bool waitForIRQ(uint32_t mask, uint16_t timeout);
   bool transceiveCommand(uint8_t *sendBuffer, size_t sendBufferLen, uint8_t *recvBuffer = 0, size_t recvBufferLen = 0);
   /*
    * Private methods, called within an SPI transaction

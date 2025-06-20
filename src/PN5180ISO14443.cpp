@@ -1,20 +1,19 @@
 // NAME: PN5180ISO14443.h
 //
-// DESC: ISO14443 protocol on NXP Semiconductors PN5180 module for Arduino.
+// DESC: Протокол ISO14443 на модуле NXP Semiconductors PN5180 для Arduino.
 //
-// Copyright (c) 2019 by Dirk Carstensen. All rights reserved.
+// Copyright (c) 2019 by Dirk Carstensen. Все права защищены.
 //
-// This file is part of the PN5180 library for the Arduino environment.
+// Этот файл является частью библиотеки PN5180 для среды Arduino.
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// Эта библиотека является свободным программным обеспечением; вы можете распространять и/или
+// изменять её на условиях Стандартной Общественной Лицензии GNU (LGPL) версии 2.1
+// либо (по вашему выбору) любой более поздней версии.
 //
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-// Lesser General Public License for more details.
+// Эта библиотека распространяется в надежде, что она будет полезной,
+// но БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; даже без подразумеваемой гарантии
+// КОММЕРЧЕСКОЙ ЦЕННОСТИ или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННОЙ ЦЕЛИ. Подробнее см. в
+// Стандартной Общественной Лицензии GNU.
 //
 // #define DEBUG 1
 
@@ -30,18 +29,18 @@ PN5180ISO14443::PN5180ISO14443(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin)
 
 bool PN5180ISO14443::setupRF()
 {
-	PN5180DEBUG(F("Loading RF-Configuration...\n"));
+	PN5180DEBUG(F("Загрузка RF-конфигурации...\n"));
 	if (loadRFConfig(0x00, 0x80))
-	{ // ISO14443 parameters
-		PN5180DEBUG(F("done.\n"));
+	{ // параметры ISO14443
+		PN5180DEBUG(F("готово.\n"));
 	}
 	else
 		return false;
 
-	PN5180DEBUG(F("Turning ON RF field...\n"));
+	PN5180DEBUG(F("Включение RF поля...\n"));
 	if (setRF_on())
 	{
-		PN5180DEBUG(F("done.\n"));
+		PN5180DEBUG(F("готово.\n"));
 	}
 	else
 		return false;
@@ -54,117 +53,117 @@ uint16_t PN5180ISO14443::rxBytesReceived()
 	uint32_t rxStatus;
 	uint16_t len = 0;
 	readRegister(RX_STATUS, &rxStatus);
-	// Lower 9 bits has length
+	// Младшие 9 бит содержат длину
 	len = (uint16_t)(rxStatus & 0x000001ff);
 	return len;
 }
 /*
- * buffer : must be 10 byte array
- * buffer[0-1] is ATQA
- * buffer[2] is sak
- * buffer[3..6] is 4 byte UID
- * buffer[7..9] is remaining 3 bytes of UID for 7 Byte UID tags
- * kind : 0  we send REQA, 1 we send WUPA
+ * buffer : должен быть массивом из 10 байт
+ * buffer[0-1] — ATQA
+ * buffer[2] — SAK
+ * buffer[3..6] — 4 байта UID
+ * buffer[7..9] — оставшиеся 3 байта UID для меток с 7-байтовым UID
+ * kind : 0 — отправляем REQA, 1 — отправляем WUPA
  *
- * return value: the uid length:
- * -	zero if no tag was recognized
- * -	single Size UID (4 byte)
- * -	double Size UID (7 byte)
- * -	triple Size UID (10 byte) - not yet supported
+ * возвращаемое значение: длина uid:
+ * -	ноль, если метка не распознана
+ * -	одинарный UID (4 байта)
+ * -	двойной UID (7 байт)
+ * -	тройной UID (10 байт) — не поддерживается
  */
 uint8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind)
 {
 	uint8_t cmd[7];
 	uint8_t uidLength = 0;
-	// Load standard TypeA protocol
+	// Загружаем стандартный протокол TypeA
 	if (!loadRFConfig(0x0, 0x80))
 		return 0;
 
-	// OFF Crypto
+	// Отключаем Crypto
 	if (!writeRegisterWithAndMask(SYSTEM_CONFIG, 0xFFFFFFBF))
 		return 0;
-	// Clear RX CRC
+	// Сбрасываем RX CRC
 	if (!writeRegisterWithAndMask(CRC_RX_CONFIG, 0xFFFFFFFE))
 		return 0;
-	// Clear TX CRC
+	// Сбрасываем TX CRC
 	if (!writeRegisterWithAndMask(CRC_TX_CONFIG, 0xFFFFFFFE))
 		return 0;
-	// Send REQA/WUPA, 7 bits in last byte
+	// Отправляем REQA/WUPA, 7 бит в последнем байте
 	cmd[0] = (kind == 0) ? 0x26 : 0x52;
 	if (!sendData(cmd, 1, 0x07))
 		return 0;
-	// READ 2 bytes ATQA into  buffer
+	// Читаем 2 байта ATQA в buffer
 	if (!readData(2, buffer))
 		return 0;
-	// Send Anti collision 1, 8 bits in last byte
+	// Отправляем Anti collision 1, 8 бит в последнем байте
 	cmd[0] = 0x93;
 	cmd[1] = 0x20;
 	if (!sendData(cmd, 2, 0x00))
 		return 0;
-	// Read 5 bytes, we will store at offset 2 for later usage
+	// Читаем 5 байт, сохраняем с offset 2 для дальнейшего использования
 	if (!readData(5, cmd + 2))
 		return 0;
-	// Enable RX CRC calculation
+	// Включаем вычисление RX CRC
 	if (!writeRegisterWithOrMask(CRC_RX_CONFIG, 0x01))
 		return 0;
-	// Enable TX CRC calculation
+	// Включаем вычисление TX CRC
 	if (!writeRegisterWithOrMask(CRC_TX_CONFIG, 0x01))
 		return 0;
-	// Send Select anti collision 1, the remaining bytes are already in offset 2 onwards
+	// Отправляем Select anti collision 1, остальные байты уже в offset 2 и далее
 	cmd[0] = 0x93;
 	cmd[1] = 0x70;
 	if (!sendData(cmd, 7, 0x00))
 		return 0;
-	// Read 1 byte SAK into buffer[2]
+	// Читаем 1 байт SAK в buffer[2]
 	if (!readData(1, buffer + 2))
 		return 0;
-	// Check if the tag is 4 Byte UID or 7 byte UID and requires anti collision 2
-	// If Bit 3 is 0 it is 4 Byte UID
+	// Проверяем, 4-байтовый UID или 7-байтовый UID и требуется ли anti collision 2
+	// Если бит 3 равен 0 — это 4-байтовый UID
 	if ((buffer[2] & 0x04) == 0)
 	{
-		// Take first 4 bytes of anti collision as UID store at offset 3 onwards. job done
+		// Берём первые 4 байта anti collision как UID, сохраняем с offset 3. Готово
 		for (int i = 0; i < 4; i++)
 			buffer[3 + i] = cmd[2 + i];
 		uidLength = 4;
 	}
 	else
 	{
-		// Take First 3 bytes of UID, Ignore first byte 88(CT)
+		// Берём первые 3 байта UID, игнорируем первый байт 88(CT)
 		if (cmd[2] != 0x88)
 			return 0;
 		for (int i = 0; i < 3; i++)
 			buffer[3 + i] = cmd[3 + i];
-		// Clear RX CRC
+		// Сбрасываем RX CRC
 		if (!writeRegisterWithAndMask(CRC_RX_CONFIG, 0xFFFFFFFE))
 			return 0;
-		// Clear TX CRC
+		// Сбрасываем TX CRC
 		if (!writeRegisterWithAndMask(CRC_TX_CONFIG, 0xFFFFFFFE))
 			return 0;
-		// Do anti collision 2
+		// Выполняем anti collision 2
 		cmd[0] = 0x95;
 		cmd[1] = 0x20;
 		if (!sendData(cmd, 2, 0x00))
 			return 0;
-		// Read 5 bytes. we will store at offset 2 for later use
+		// Читаем 5 байт, сохраняем с offset 2 для дальнейшего использования
 		if (!readData(5, cmd + 2))
 			return 0;
-		// first 4 bytes belongs to last 4 UID bytes, we keep it.
+		// первые 4 байта — это последние 4 байта UID, сохраняем их
 		for (int i = 0; i < 4; i++)
 		{
 			buffer[6 + i] = cmd[2 + i];
 		}
-		// Enable RX CRC calculation
+		// Включаем вычисление RX CRC
 		if (!writeRegisterWithOrMask(CRC_RX_CONFIG, 0x01))
 			return 0;
-		// Enable TX CRC calculation
+		// Включаем вычисление TX CRC
 		if (!writeRegisterWithOrMask(CRC_TX_CONFIG, 0x01))
 			return 0;
-		// Send Select anti collision 2
+		// Отправляем Select anti collision 2
 		cmd[0] = 0x95;
 		cmd[1] = 0x70;
 		if (!sendData(cmd, 7, 0x00))
 			return 0;
-		// Read 1 byte SAK into buffer[2]
+		// Читаем 1 байт SAK в buffer[2]
 		if (!readData(1, buffer + 2))
 			return 0;
 		uidLength = 7;
@@ -173,62 +172,13 @@ uint8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind)
 	return uidLength;
 }
 
-// Работаем непосредственно с картой минуя PN5180
-bool PN5180ISO14443::transceiveRF(uint8_t *txData, uint8_t txLen, uint8_t *rxData, uint8_t maxRxLen, uint8_t *actualRxLen)
-{
-	// 1. Переводим в IDLE
-	writeRegister(PN5180_COMMAND, 0x00000000);
-
-	// 2. Очищаем прерывания
-	clearIRQStatus(0xFFFFFFFF);
-
-	// 3. Передаём данные в буфер TX
-	if (!sendData(txData, txLen))
-	{
-		PN5180DEBUG(F("Failed to send RF data\n"));
-		return false;
-	}
-
-	// 4. Устанавливаем TRANSCEIVE
-	writeRegister(PN5180_COMMAND, 0x09000000); // TRANSCEIVE
-
-	// 5. Ждём RX IRQ
-	if (!waitForIRQ(RX_IRQ_STAT, 100))
-	{
-		PN5180DEBUG(F("Timeout waiting for RX_IRQ\n"));
-		return false;
-	}
-
-	// 6. Читаем ответ
-	uint8_t len = readRFResponse(rxData, maxRxLen);
-	if (actualRxLen)
-		*actualRxLen = len;
-
-	return (len > 0);
-}
-
-bool PN5180::waitForIRQ(uint32_t mask, uint16_t timeout)
-{
-	unsigned long start = millis();
-
-	while (millis() - start < timeout)
-	{
-		uint32_t irq = getIRQStatus();
-		if (irq & mask)
-		{
-			clearIRQStatus(mask); // не забудь сбросить, если сработало
-			return true;
-		}
-	}
-	return false; // таймаут
-}
 
 bool PN5180ISO14443::mifareBlockRead(uint8_t blockno, uint8_t *buffer)
 {
 	bool success = false;
 	uint16_t len;
 	uint8_t cmd[2];
-	// Send mifare command 30,blockno
+	// Отправляем команду mifare 30, blockno
 	cmd[0] = 0x30;
 	cmd[1] = blockno;
 	if (!sendData(cmd, 2, 0x00))
@@ -237,12 +187,12 @@ bool PN5180ISO14443::mifareBlockRead(uint8_t blockno, uint8_t *buffer)
 		Serial.println(blockno, HEX);
 		return false;
 	}
-	// Check if we have received any data from the tag
+	// Проверяем, получили ли мы какие-либо данные от метки
 	delay(5);
 	len = rxBytesReceived();
 	if (len == 16)
 	{
-		// READ 16 bytes into buffer
+		// Читаем 16 байт в buffer
 		if (readData(16, buffer))
 		{
 			// Выводим только одну страницу (4 байта)
@@ -274,34 +224,12 @@ bool PN5180ISO14443::mifareBlockRead(uint8_t blockno, uint8_t *buffer)
 	return success;
 }
 
-uint8_t PN5180ISO14443::mifareBlockWrite16(uint8_t blockno, uint8_t *buffer)
-{
-	uint8_t cmd[1];
-	// Clear RX CRC
-	writeRegisterWithAndMask(CRC_RX_CONFIG, 0xFFFFFFFE);
 
-	// Mifare write part 1
-	cmd[0] = 0xA0;
-	cmd[1] = blockno;
-	sendData(cmd, 2, 0x00);
-	readData(1, cmd);
-
-	// Mifare write part 2
-	sendData(buffer, 16, 0x00);
-	delay(10);
-
-	// Read ACK/NAK
-	readData(1, cmd);
-
-	// Enable RX CRC calculation
-	writeRegisterWithOrMask(CRC_RX_CONFIG, 0x1);
-	return cmd[0];
-}
 
 uint8_t PN5180ISO14443::mifareUltralightWrite(uint8_t block, uint8_t *data4)
 {
 	uint8_t cmd[6];
-	cmd[0] = 0xA2;	// WRITE команда для Ultralight
+	cmd[0] = 0xA2;	// WRITE-команда для Ultralight
 	cmd[1] = block; // Адрес блока (page)
 	memcpy(&cmd[2], data4, 4);
 
@@ -345,17 +273,17 @@ uint8_t PN5180ISO14443::readCardSerial(uint8_t *buffer)
 
 	uint8_t response[10];
 	uint8_t uidLength;
-	// Always return 10 bytes
-	// Offset 0..1 is ATQA
-	// Offset 2 is SAK.
-	// UID 4 bytes : offset 3 to 6 is UID, offset 7 to 9 to Zero
-	// UID 7 bytes : offset 3 to 9 is UID
+	// Всегда возвращаем 10 байт
+	// Смещение 0..1 — ATQA
+	// Смещение 2 — SAK.
+	// UID 4 байта: смещение 3–6 — UID, смещение 7–9 — нули
+	// UID 7 байт: смещение 3–9 — UID
 	for (int i = 0; i < 10; i++)
 		response[i] = 0;
 	uidLength = activateTypeA(response, 1);
 	if ((response[0] == 0xFF) && (response[1] == 0xFF))
 		return 0;
-	// check for valid uid
+	// проверяем валидность uid
 	if ((response[3] == 0x00) && (response[4] == 0x00) && (response[5] == 0x00) && (response[6] == 0x00))
 		return 0;
 	if ((response[3] == 0xFF) && (response[4] == 0xFF) && (response[5] == 0xFF) && (response[6] == 0xFF))
@@ -367,21 +295,21 @@ uint8_t PN5180ISO14443::readCardSerial(uint8_t *buffer)
 	return uidLength;
 }
 
-uint8_t PN5180ISO14443::readCardSerial_ATQA_SAK(uint8_t *buffer)
+uint8_t PN5180ISO14443::readCard_UL_EV1(uint8_t *buffer)
 {
 	uint8_t response[10];
 	uint8_t uidLength;
-	// Always return 10 bytes
-	// Offset 0..1 is ATQA
-	// Offset 2 is SAK.
-	// UID 4 bytes : offset 3 to 6 is UID, offset 7 to 9 to Zero
-	// UID 7 bytes : offset 3 to 9 is UID
+	// Всегда возвращаем 10 байт
+	// Смещение 0..1 — ATQA
+	// Смещение 2 — SAK.
+	// UID 4 байта: смещение 3–6 — UID, смещение 7–9 — нули
+	// UID 7 байт: смещение 3–9 — UID
 	for (int i = 0; i < 10; i++)
 		response[i] = 0;
 	uidLength = activateTypeA(response, 1);
 	if ((response[0] == 0xFF) && (response[1] == 0xFF))
 		return 0;
-	// check for valid uid
+	// проверяем валидность uid
 	if ((response[3] == 0x00) && (response[4] == 0x00) && (response[5] == 0x00) && (response[6] == 0x00))
 		return 0;
 	if ((response[3] == 0xFF) && (response[4] == 0xFF) && (response[5] == 0xFF) && (response[6] == 0xFF))
@@ -389,26 +317,35 @@ uint8_t PN5180ISO14443::readCardSerial_ATQA_SAK(uint8_t *buffer)
 	for (int i = 0; i < 10; i++)
 	{
 		buffer[i] = response[i];
-	};
-
-		// Читаем версию
-	uint8_t versionData[8];
-	if (mifareGetVersion(versionData))
-	{
-		// Дополнительно можешь разобрать структуру по байтам:
-		Serial.print(F("Vendor ID: "));
-		Serial.println(versionData[0], HEX);
-		Serial.print(F("Product Type: "));
-		Serial.println(versionData[1], HEX);
-		// и так далее...
 	}
-	
+	// Проверяем: UID длина 7 байт, SAK = 0x00, ATQA = 0x0044
+	if (!(uidLength == 7 && response[2] == 0x00 && response[0] == 0x44 && response[1] == 0x00))
+	{
+		Serial.println(F("Это не mifare_UL_EV1"));
+		// mifareHalt();
+		return uidLength;
+	}
+
+	// Читаем версию
+	uint8_t versionData[8];
+	if (mifare_UL_EV1_GetVersion(versionData))
+	{
+		// Проверяем, что это MIFARE Ultralight EV1 48 байт
+		if (versionData[2] != 0x03 || versionData[4] != 0x01 || versionData[6] != 0x0B)
+		{
+			Serial.println(F("Это не mifare_UL_EV1 48 кБ"));
+			return uidLength;
+		}
+	}
+
+	Serial.println(F("Обнаружена mifare_UL_EV1 48 кБ!"));
+
 	// Аутентификация PWD_AUTH
 	// uint8_t password[4] = {0xD1, 0xF7, 0x34, 0x85}; //  твой пароль
 	uint8_t password[4] = {0xFF, 0xFF, 0xFF, 0xFF}; //  пароль по умолчанию
 	uint8_t pack_read[2];
 
-	if (mifarePwdAuth(password, pack_read))
+	if (mifare_UL_EV1_PwdAuth(password, pack_read))
 	{
 		Serial.print(F("Аутентификация прошла успешно! PACK: "));
 		Serial.print(pack_read[0], HEX);
@@ -421,19 +358,16 @@ uint8_t PN5180ISO14443::readCardSerial_ATQA_SAK(uint8_t *buffer)
 		return 0;
 	}
 
-
-
 	// Читаем подпись
 	uint8_t sig[32];
-	if (mifareReadSignature(sig))
+	if (mifare_UL_EV1_ReadSig(sig))
 	{
 		Serial.println(F("Подпись успешно считана!"));
 	}
 
-	// Прочитаем  блок
+	// Читаем блок
 	uint8_t blockData[16];
 	mifareBlockRead(0x0F, blockData);
-
 
 	// mifareBlockRead(0x11, blockData);
 	// mifareBlockRead(0x12, blockData);
@@ -482,13 +416,13 @@ uint8_t PN5180ISO14443::readCardSerial_ATQA_SAK(uint8_t *buffer)
 	// uint8_t cfg0[4] = {0x00, 0x00, 0x00, 0xFF}; // AUTH0 = 0xFF — нет защиты
 
 	// // Страница 0x11: CFG1 защита
-	// // AUTHLIM лучше не использовать карта блокируется навсегда!
+	// // AUTHLIM лучше не использовать — карта блокируется навсегда!
 	// uint8_t cfg1[4] = {0x00, 0x05, 0x00, 0x00}; // PROT = 0, AUTHLIM=0  → защита только от записи; неудачные попытки аутентификации неограничены
 	// uint8_t cfg1[4] = {0x80, 0x05, 0x00, 0x00}; // PROT = 1, AUTHLIM=0 → защита чтения и записи; неудачные попытки аутентификации неограничены
-	// !!!uint8_t cfg1[4] = {0x87, 0x05, 0x00, 0x00}; // PROT=1, AUTHLIM=3 → защита чтения и записи; !!!!!!максимум 7 неудачные попытки аутентификации (от 1 до 7 попыток 0x81…0x87) лучше не использовать карта блокируется навсегда!!!!
+	// !!!uint8_t cfg1[4] = {0x87, 0x05, 0x00, 0x00}; // PROT=1, AUTHLIM=3 → защита чтения и записи; !!!!!!максимум 7 неудачных попыток аутентификации (от 1 до 7 попыток 0x81…0x87) лучше не использовать — карта блокируется навсегда!!!!
 
 	// Страница 0x12 — устанавливаем пароль
-	// uint8_t pwd[4] = {0xFF, 0xFF, 0xFF, 0xFF}; 
+	// uint8_t pwd[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
 	// Страница 0x13 — устанавливаем PACK (последние 2 байта должны быть 0x00)
 	// uint8_t pack[4] = {0x00, 0x00, 0x00, 0x00};
@@ -515,91 +449,34 @@ bool PN5180ISO14443::isCardPresent()
 	return (readCardSerial(buffer) >= 4);
 }
 
-// bool PN5180ISO14443::mifareUltralightPwdAuth(uint8_t *pwd, uint8_t *pack_out)
-// {
-// 	uint8_t cmd[5];
-// 	cmd[0] = 0x1B;			 // Команда PWD_AUTH
-// 	memcpy(&cmd[1], pwd, 4); // Копируем 4 байта пароля в команду
+/*
+ * Выполняет команду GET_VERSION (0x60) для карты MIFARE Ultralight EV1.
+ * 
+ * Если команда успешна, устройство вернет 8 байт информации о чипе.
+ * Формат ответа:
+ *
+ * Byte | Назначение                | Описание
+ * -----|---------------------------|------------------------------------------
+ * [0]  | Vendor ID                 | 0x04 = NXP Semiconductors
+ * [1]  | Product Type              | 0x03 = MIFARE Ultralight
+ * [2]  | Product Subtype           | 0x01 = EV1
+ * [3]  | Major Product Version     | Например: 0x01
+ * [4]  | Minor Product Version     | Например: 0x00
+ * [5]  | Storage Size              | 0x0B = 192 байт (Ultralight EV1 192B)
+ *                                  | 0x0E = 320 байт (Ultralight EV1 320B)
+ * [6]  | Protocol Type             | 0x03 = ISO/IEC 14443-3 compliant
+ * [7]  | RFU (Reserved for Future) | Может быть 0x00 или другое значение
+ * 
+ * Пример возвращаемого буфера:
+ *   0x04 0x03 0x01 0x01 0x00 0x0B 0x03 0x00
+ *   └────┘ └────┘ └────┘ └────┘ └────┘ └────┘
+ *    NXP   UL     EV1     v1.0    192B   ISO
+ *
+ * Возвращает: true — если команда успешно выполнена и данные получены,
+ *             false — при ошибке отправки команды.
+ */
+bool PN5180ISO14443::mifare_UL_EV1_GetVersion(uint8_t *versionBuffer)
 
-// 	if (!sendData(cmd, 5, 0x00))
-// 		return false; // Ошибка отправки
-
-// 	delay(5); // Небольшая задержка (чтобы карта успела подумать)
-
-// 	uint8_t response[2];
-// 	if (!readData(2, response))
-// 		return false; // Не получили ответ
-
-// 	if (pack_out)
-// 	{
-// 		pack_out[0] = response[0]; // PACK[0]
-// 		pack_out[1] = response[1]; // PACK[1]
-// 	}
-
-// 	return true; // Успешная аутентификация
-// }
-
-bool PN5180ISO14443::readSignature(uint8_t *sigBuf, uint8_t &nak)
-{
-	uint8_t cmd[2] = {0x3C, 0x00}; // без CRC!
-	uint8_t recv[33] = {0};		   // 32 байта сигнатуры + 1 байт NAK
-
-	if (!transceiveCommand(cmd, sizeof(cmd), recv, sizeof(recv)))
-		return false;
-
-	memcpy(sigBuf, recv, 32);
-	nak = recv[32];
-	return true;
-}
-
-// bool PN5180ISO14443::writeProtectedBlock(uint8_t blockno, uint8_t *buffer)
-// {
-// 	uint8_t pwd[4] = {0x00, 0x00, 0x00, 0x00}; // Установленный пароль
-// 	uint8_t expectedPACK[2] = {0x00, 0x00};	   // PACK, который ты записал ранее
-// 	uint8_t packOut[2] = {0};
-
-// 	// Шаг 1: Аутентификация
-// 	if (!mifareUltralightPwdAuth(pwd, packOut))
-// 	{
-// 		Serial.println(F("PWD_AUTH провален!"));
-// 		return false;
-// 	}
-
-// 	// Шаг 2: Проверим PACK
-// 	if (packOut[0] != expectedPACK[0] || packOut[1] != expectedPACK[1])
-// 	{
-// 		Serial.print(F("PACK неверный! Получено: "));
-// 		Serial.print(packOut[0], HEX);
-// 		Serial.print(" ");
-// 		Serial.println(packOut[1], HEX);
-// 		return false;
-// 	}
-
-// 	Serial.println(F("Аутентификация успешна! Пишем блок..."));
-
-// 	// Шаг 3: Запись блока, переданного через blockno
-// 	if (!mifareUltralightWrite(blockno, buffer))
-// 	{
-// 		Serial.println(F("Ошибка записи защищённого блока!"));
-// 		return false;
-// 	}
-
-// 	// Шаг 4: Отладочный вывод
-// 	Serial.print(F("Блок 0x"));
-// 	Serial.print(blockno, HEX);
-// 	Serial.print(F(" записан: "));
-// 	for (int i = 0; i < 4; i++)
-// 	{
-// 		Serial.print(buffer[i], HEX);
-// 		if (i < 3)
-// 			Serial.print(":");
-// 	}
-// 	Serial.println();
-
-// 	return true;
-// }
-
-bool PN5180ISO14443::mifareGetVersion(uint8_t *versionBuffer)
 {
 	uint8_t cmd = 0x60; // GET_VERSION
 
@@ -640,7 +517,7 @@ bool PN5180ISO14443::mifareGetVersion(uint8_t *versionBuffer)
 	return true;
 }
 
-bool PN5180ISO14443::mifareReadSignature(uint8_t *sigBuffer)
+bool PN5180ISO14443::mifare_UL_EV1_ReadSig(uint8_t *sigBuffer)
 {
 	uint8_t cmd[2] = {0x3C, 0x00}; // READ_SIG и адрес
 
@@ -683,7 +560,7 @@ bool PN5180ISO14443::mifareReadSignature(uint8_t *sigBuffer)
 	return true;
 }
 
-bool PN5180ISO14443::mifarePwdAuth(uint8_t *pwd, uint8_t *pack)
+bool PN5180ISO14443::mifare_UL_EV1_PwdAuth(uint8_t *pwd, uint8_t *pack)
 {
 	uint8_t cmd[5];
 	uint8_t response[2]; // PACK должен быть 2 байта

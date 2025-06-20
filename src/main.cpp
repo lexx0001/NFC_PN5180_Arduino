@@ -157,12 +157,12 @@ bool PN5180ISO14443_start()
 void printCardSerial_ATQA_SAK()
 {
   uint8_t buffer[10] = {0}; // 0-1: ATQA, 2: SAK, 3-9: UID
-  // uint8_t uidLength = nfc.readCardSerial_ATQA_SAK(buffer);
-   uint8_t uidLength = nfc.readCardSerial(buffer);
+  // uint8_t uidLength = nfc.readCard_UL_EV1(buffer);
+   uint8_t uidLength = nfc.readCard_UL_EV1(buffer);
 
   if (!uidLength)
   {
-    Serial.println(F("Error in readCardSerial_ATQA_SAK: "));
+    Serial.println(F("Error in readCard: "));
     errorFlag = true;
     return;
   }
@@ -190,4 +190,5 @@ void printCardSerial_ATQA_SAK()
   Serial.println(atqaStr);
 
   Serial.println(F("------------------------------------------------"));
+
 }
