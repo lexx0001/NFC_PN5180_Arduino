@@ -172,7 +172,6 @@ uint8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind)
 	return uidLength;
 }
 
-
 bool PN5180ISO14443::mifareBlockRead(uint8_t blockno, uint8_t *buffer)
 {
 	bool success = false;
@@ -223,8 +222,6 @@ bool PN5180ISO14443::mifareBlockRead(uint8_t blockno, uint8_t *buffer)
 	}
 	return success;
 }
-
-
 
 uint8_t PN5180ISO14443::mifareUltralightWrite(uint8_t block, uint8_t *data4)
 {
@@ -318,6 +315,14 @@ uint8_t PN5180ISO14443::readCard_UL_EV1(uint8_t *buffer)
 	{
 		buffer[i] = response[i];
 	}
+
+	// Проверка на SAK == 0x20, если так — вызываем sendRATS()
+	if (response[2] == 0x20)
+	{
+		Serial.println(F("SAK == 0x20, отправка RATS..."));
+		sendRATS();
+	}
+
 	// Проверяем: UID длина 7 байт, SAK = 0x00, ATQA = 0x0044
 	if (!(uidLength == 7 && response[2] == 0x00 && response[0] == 0x44 && response[1] == 0x00))
 	{
@@ -369,76 +374,6 @@ uint8_t PN5180ISO14443::readCard_UL_EV1(uint8_t *buffer)
 	uint8_t blockData[16];
 	mifareBlockRead(0x0F, blockData);
 
-	// mifareBlockRead(0x11, blockData);
-	// mifareBlockRead(0x12, blockData);
-	// mifareBlockRead(0x13, blockData);
-	// mifareBlockRead(0x0F, blockData);
-	// uint8_t data0F[4] = {0x01, 0x02, 0x03, 0x04};
-	// mifareUltralightWrite(0x0F, data0F);
-	// mifareBlockRead(0x0F, blockData);
-	// if (mifareBlockRead(0x0F, blockData))
-	// {
-	// 	Serial.println(F("--- Содержимое блока 0x0F ---"));
-	// 	char hexStr[4]; // "XX\0"
-	// 	for (int i = 0; i < 4; i++)
-	// 	{
-	// 		snprintf(hexStr, sizeof(hexStr), "%02X", blockData[i]);
-	// 		Serial.print(hexStr);
-	// 		if (i < 3)
-	// 			Serial.print(":");
-	// 	}
-	// 	Serial.println();
-	// }
-	// else
-	// {
-	// 	Serial.println(F("Ошибка чтения блока 0x0F"));
-	// 	return 0;
-	// }
-
-	/* Запись защищённого блока */
-	// uint8_t dataBuf[4] = {0x00, 0x00, 0x00, 0x00}; // 4 байта для одной страницы
-	// if (writeProtectedBlock(0x0F, dataBuf))
-	// {
-	// 	Serial.println(F("Запись защищённого блока прошла успешно!"));
-	// }
-	// else
-	// {
-	// 	Serial.println(F("Не удалось записать защищённый блок!"));
-	// }
-
-	/* Настройка защиты Mifare Ultralight*/
-	// uint8_t data[4] = {0x00, 0x00, 0x00, 0x00};
-	// uint8_t data1[4] = {0x01, 0x02, 0x03, 0x04};
-
-	// // Страница 0x10: CFG0 → AUTH0 с какой страницы начинается защита
-	// uint8_t cfg0[4] = {0x00, 0x00, 0x00, 0x00}; // AUTH0 = 0x00 — защита с 1-й страницы
-	// uint8_t cfg0[4] = {0x00, 0x00, 0x00, 0x0F}; // AUTH0 = 0x0F — защита с 15-й страницы
-	// uint8_t cfg0[4] = {0x00, 0x00, 0x00, 0xFF}; // AUTH0 = 0xFF — нет защиты
-
-	// // Страница 0x11: CFG1 защита
-	// // AUTHLIM лучше не использовать — карта блокируется навсегда!
-	// uint8_t cfg1[4] = {0x00, 0x05, 0x00, 0x00}; // PROT = 0, AUTHLIM=0  → защита только от записи; неудачные попытки аутентификации неограничены
-	// uint8_t cfg1[4] = {0x80, 0x05, 0x00, 0x00}; // PROT = 1, AUTHLIM=0 → защита чтения и записи; неудачные попытки аутентификации неограничены
-	// !!!uint8_t cfg1[4] = {0x87, 0x05, 0x00, 0x00}; // PROT=1, AUTHLIM=3 → защита чтения и записи; !!!!!!максимум 7 неудачных попыток аутентификации (от 1 до 7 попыток 0x81…0x87) лучше не использовать — карта блокируется навсегда!!!!
-
-	// Страница 0x12 — устанавливаем пароль
-	// uint8_t pwd[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-
-	// Страница 0x13 — устанавливаем PACK (последние 2 байта должны быть 0x00)
-	// uint8_t pack[4] = {0x00, 0x00, 0x00, 0x00};
-
-	// mifareUltralightWrite(0x09, data1);
-	// mifareUltralightWrite(0x0F, data);
-	//                                    обязательный порядок записи страниц
-	// mifareUltralightWrite(0x12, pwd); //1/ Пароль для защиты
-	// mifareUltralightWrite(0x13, pack); //2/ PACK для защиты
-	// mifareUltralightWrite(0x11, cfg1); //3/ PROT=1 → защита чтения и записи
-	// mifareUltralightWrite(0x10, cfg0); //4/ AUTH0=0x0F → защита со страницы ...
-
-	// uint8_t password[5] = {0x1B, 0x12, 0x34, 0x56, 0x78}; // Команда + 4 байта PWD
-	// uint8_t pack[2] = {0};
-	/* Конец защиты Mifare Ultralight*/
-
 	mifareHalt();
 	return uidLength;
 }
@@ -451,7 +386,7 @@ bool PN5180ISO14443::isCardPresent()
 
 /*
  * Выполняет команду GET_VERSION (0x60) для карты MIFARE Ultralight EV1.
- * 
+ *
  * Если команда успешна, устройство вернет 8 байт информации о чипе.
  * Формат ответа:
  *
@@ -466,7 +401,7 @@ bool PN5180ISO14443::isCardPresent()
  *                                  | 0x0E = 320 байт (Ultralight EV1 320B)
  * [6]  | Protocol Type             | 0x03 = ISO/IEC 14443-3 compliant
  * [7]  | RFU (Reserved for Future) | Может быть 0x00 или другое значение
- * 
+ *
  * Пример возвращаемого буфера:
  *   0x04 0x03 0x01 0x01 0x00 0x0B 0x03 0x00
  *   └────┘ └────┘ └────┘ └────┘ └────┘ └────┘
@@ -612,4 +547,89 @@ bool PN5180ISO14443::mifare_UL_EV1_PwdAuth(uint8_t *pwd, uint8_t *pack)
 	Serial.println(pack[1], HEX);
 
 	return true;
+}
+
+void PN5180ISO14443::sendRATS()
+{
+	uint8_t rats[] = {0xE0, 0x80}; // RATS: FSDI=8, CID=0
+
+	Serial.println(F("Отправляем RATS..."));
+	if (!sendData(rats, sizeof(rats), 0))
+	{
+		Serial.println(F("Ошибка при отправке RATS"));
+		return;
+	}
+
+	delay(5);
+
+	uint8_t ats[32];
+	int len = rxBytesReceived();
+	if (len > 0 && static_cast<size_t>(len) <= sizeof(ats))
+	{
+		readData(len, ats);
+		Serial.print(F("ATS: "));
+		for (int i = 0; i < len; i++)
+		{
+			Serial.print(ats[i], HEX);
+			Serial.print(" ");
+		}
+		Serial.println();
+		delay(5);
+		sendSelectAID();
+	}
+	else
+	{
+		Serial.println(F("Не получили ATS или ошибка чтения"));
+	}
+}
+
+// Отправляет команду SELECT AID для NFC Forum
+void PN5180ISO14443::sendSelectAID()
+{
+	uint8_t selectNfcForum[] = {
+		0x00, 0xA4, 0x04, 0x00,
+		0x07, 0xD2, 0x76, 0x00,
+		0x00, 0x85, 0x01, 0x01,
+		0x00};
+
+	// Формируем I-Block: PCB (0x02) + APDU
+	uint8_t iblock[1 + sizeof(selectNfcForum)];
+	iblock[0] = 0x02; // PCB для I-Block
+	memcpy(&iblock[1], selectNfcForum, sizeof(selectNfcForum));
+
+	Serial.println(F("Отправляем SELECT AID (I-Block)..."));
+	if (!sendData(iblock, sizeof(iblock), 0))
+	{
+		Serial.println(F("Ошибка при отправке SELECT AID"));
+		return;
+	}
+
+	// Ждём с polling
+	uint8_t response[32];
+	int len = 0;
+	uint32_t start = millis();
+	while ((len = rxBytesReceived()) == 0 && (millis() - start) < 300) {
+		delay(2);
+	}
+
+	if (len > 0 && static_cast<size_t>(len) <= sizeof(response))
+	{
+		readData(len, response);
+		Serial.print(F("Ответ на SELECT AID: "));
+		for (int i = 1; i < len; i++)
+		{
+			Serial.print(response[i], HEX);
+			Serial.print(" ");
+		}
+		Serial.println();
+
+		// Проверяем на 6A 82 (разблокируйте телефон)
+		if (len >= 3 && response[len-2] == 0x6A && response[len-1] == 0x82) {
+			Serial.println(F("разблокируйте телефон"));
+		}
+	}
+	else
+	{
+		Serial.println(F("Не получили ответ на SELECT AID"));
+	}
 }

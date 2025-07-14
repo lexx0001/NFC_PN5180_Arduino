@@ -33,7 +33,7 @@ private:
 public:
   // Mifare TypeA
   uint8_t activateTypeA(uint8_t *buffer, uint8_t kind);
-  
+
   bool mifareBlockRead(uint8_t blockno, uint8_t *buffer);
   uint8_t mifareUltralightWrite(uint8_t block, uint8_t *data4);
   bool mifareHalt();
@@ -50,6 +50,8 @@ public:
   bool mifare_UL_EV1_GetVersion(uint8_t *versionBuffer);
   bool mifare_UL_EV1_ReadSig(uint8_t *sigBuffer);
   bool mifare_UL_EV1_PwdAuth(uint8_t *pwd, uint8_t *pack);
-  };
+  void sendRATS();
+  void sendSelectAID();
+};
 
 #endif /* PN5180ISO14443_H */

@@ -31,7 +31,6 @@
 #define PN5180_RST 7
 #define PIN_TRIGGER 4 // управление питанием PN5180
 
-
 PN5180ISO14443 nfc(PN5180_NSS, PN5180_BUSY, PN5180_RST);
 bool PN5180ISO14443_start();
 void printCardSerial_ATQA_SAK();
@@ -42,9 +41,9 @@ uint8_t productVersion[2];
 
 void setup()
 {
-  pinMode(PIN_TRIGGER, OUTPUT); // Назначаем пин питания PN5180
+  pinMode(PIN_TRIGGER, OUTPUT);    // Назначаем пин питания PN5180
   digitalWrite(PIN_TRIGGER, HIGH); // Включаем питание PN5180
-  delay(30); // Ждем 30 мс для стабилизации питания
+  delay(30);                       // Ждем 30 мс для стабилизации питания
 
   Serial.begin(9600);
 
@@ -67,7 +66,7 @@ void loop()
     nfc.showIRQStatus(irqStatus);
 
     if (0 == (RX_SOF_DET_IRQ_STAT & irqStatus))
-    { 
+    {
       Serial.println(F("*** ERROR! So many cards in RF field, maybe? ***"));
     }
 
@@ -152,13 +151,11 @@ bool PN5180ISO14443_start()
   return true;
 }
 
-
-
 void printCardSerial_ATQA_SAK()
 {
   uint8_t buffer[10] = {0}; // 0-1: ATQA, 2: SAK, 3-9: UID
-  // uint8_t uidLength = nfc.readCard_UL_EV1(buffer);
-   uint8_t uidLength = nfc.readCard_UL_EV1(buffer);
+                            // uint8_t uidLength = nfc.readCard_UL_EV1(buffer);
+  uint8_t uidLength = nfc.readCard_UL_EV1(buffer);
 
   if (!uidLength)
   {
@@ -190,5 +187,4 @@ void printCardSerial_ATQA_SAK()
   Serial.println(atqaStr);
 
   Serial.println(F("------------------------------------------------"));
-
 }
