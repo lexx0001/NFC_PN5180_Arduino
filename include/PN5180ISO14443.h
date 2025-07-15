@@ -51,7 +51,7 @@ public:
   bool mifare_UL_EV1_ReadSig(uint8_t *sigBuffer);
   bool mifare_UL_EV1_PwdAuth(uint8_t *pwd, uint8_t *pack);
   void sendRATS();
-  void sendSelectAID();
+  void sendSelectAID(uint8_t fwt_ats);
 };
 
 #endif /* PN5180ISO14443_H */

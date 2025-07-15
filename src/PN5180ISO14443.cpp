@@ -560,13 +560,14 @@ void PN5180ISO14443::sendRATS()
 		return;
 	}
 
-	delay(5);
-
+	delay(3);
 	uint8_t ats[32];
+	uint8_t fwt_ats; // Таймаут ответа (Frame Waiting Time) из ATS
 	int len = rxBytesReceived();
 	if (len > 0 && static_cast<size_t>(len) <= sizeof(ats))
 	{
 		readData(len, ats);
+		fwt_ats = ats[3]; // Получаем FWT из ATS, 4-й байт (индекс 3)
 		Serial.print(F("ATS: "));
 		for (int i = 0; i < len; i++)
 		{
@@ -574,8 +575,8 @@ void PN5180ISO14443::sendRATS()
 			Serial.print(" ");
 		}
 		Serial.println();
-		delay(5);
-		sendSelectAID();
+		delay(3);
+		sendSelectAID(fwt_ats);
 	}
 	else
 	{
@@ -583,8 +584,8 @@ void PN5180ISO14443::sendRATS()
 	}
 }
 
-// Отправляет команду SELECT AID для NFC Forum
-void PN5180ISO14443::sendSelectAID()
+// Отправляет команду SELECT AID для NFC Forum, учитывая FWI из ATS
+void PN5180ISO14443::sendSelectAID(uint8_t fwt_ats)
 {
 	uint8_t selectNfcForum[] = {
 		0x00, 0xA4, 0x04, 0x00,
@@ -597,34 +598,52 @@ void PN5180ISO14443::sendSelectAID()
 	iblock[0] = 0x02; // PCB для I-Block
 	memcpy(&iblock[1], selectNfcForum, sizeof(selectNfcForum));
 
-	Serial.println(F("Отправляем SELECT AID (I-Block)..."));
+	// Вычисляем абсолютное значение FWT по формуле:
+	// FWT = (256 * 16 / fc) * 2^FWI
+	// fc = 13.56 МГц
+	uint8_t FWI = fwt_ats & 0x0F;
+	uint32_t base = (256UL * 16UL * 1000UL) / 13560UL; // ≈ 0.2234 мс
+	uint32_t FWT_ms = base * (1UL << FWI);
+	Serial.print(F("FWT (ms): "));
+	Serial.println(FWT_ms);
+
+	Serial.println(F("Отправляем SELECT AID (I-Block)"));
 	if (!sendData(iblock, sizeof(iblock), 0))
 	{
 		Serial.println(F("Ошибка при отправке SELECT AID"));
 		return;
 	}
 
-	// Ждём с polling
 	uint8_t response[32];
 	int len = 0;
 	uint32_t start = millis();
-	while ((len = rxBytesReceived()) == 0 && (millis() - start) < 300) {
-		delay(2);
+	while ((len = rxBytesReceived()) == 0 && (millis() - start) < FWT_ms)
+	{
+		delay(20);
 	}
 
 	if (len > 0 && static_cast<size_t>(len) <= sizeof(response))
 	{
 		readData(len, response);
+		if (response[0] != 0x02) // Проверяем PCB, должен быть I-Block
+		{
+			Serial.print(F("Ожидали I-Block (PCB 0x02), получили: "));
+			Serial.println(response[0], HEX);
+			return;
+		}
+
 		Serial.print(F("Ответ на SELECT AID: "));
 		for (int i = 1; i < len; i++)
 		{
+			if (response[i] < 0x10)
+				Serial.print("0");
 			Serial.print(response[i], HEX);
 			Serial.print(" ");
 		}
 		Serial.println();
 
-		// Проверяем на 6A 82 (разблокируйте телефон)
-		if (len >= 3 && response[len-2] == 0x6A && response[len-1] == 0x82) {
+		if (len >= 3 && response[len - 2] == 0x6A && response[len - 1] == 0x82)
+		{
 			Serial.println(F("разблокируйте телефон"));
 		}
 	}
