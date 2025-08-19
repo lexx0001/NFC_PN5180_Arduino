@@ -29,7 +29,7 @@
 #define PN5180_NSS 10
 #define PN5180_BUSY 9
 #define PN5180_RST 7
-#define PIN_TRIGGER 4 // управление питанием PN5180
+// #define PIN_TRIGGER 4 // управление питанием PN5180
 
 PN5180ISO14443 nfc(PN5180_NSS, PN5180_BUSY, PN5180_RST);
 bool PN5180ISO14443_start();
@@ -41,9 +41,9 @@ uint8_t productVersion[2];
 
 void setup()
 {
-  pinMode(PIN_TRIGGER, OUTPUT);    // Назначаем пин питания PN5180
-  digitalWrite(PIN_TRIGGER, HIGH); // Включаем питание PN5180
-  delay(30);                       // Ждем 30 мс для стабилизации питания
+  // pinMode(PIN_TRIGGER, OUTPUT);    // Назначаем пин питания PN5180
+  // digitalWrite(PIN_TRIGGER, HIGH); // Включаем питание PN5180
+  // delay(30);                       // Ждем 30 мс для стабилизации питания
 
   Serial.begin(9600);
 
@@ -88,7 +88,7 @@ void loop()
 
     if (irqStatus != 0x24007)
     {
-      Serial.println(F("Error: Unexpected IRQ status (not 0x24007), resetting PN5180!"));
+      Serial.println(F("Error: Unexpected IRQ status (not 0x24007)"));
       errorFlag = true;
     }
 
@@ -97,7 +97,7 @@ void loop()
   }
 
   printCardSerial_ATQA_SAK();
-  delay(4000); // wait a second before next loop
+  delay(2500); // wait a second before next loop
 }
 
 // Function to start the PN5180 ISO14443

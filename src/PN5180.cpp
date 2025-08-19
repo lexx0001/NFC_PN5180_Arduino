@@ -558,16 +558,13 @@ bool PN5180::transceiveCommand(uint8_t *sendBuffer, size_t sendBufferLen, uint8_
 }
 
 
-/* Функция перемещена в PN5180ISO14443.cpp */
 
-/*
- * Сбросить NFC-устройство
- */
 void PN5180::reset() {
+  Serial.println(F("Reset PN5180..."));
   digitalWrite(PN5180_RST, LOW);  // требуется не менее 10 мкс
-  delay(200);
+  delay(20);
   digitalWrite(PN5180_RST, HIGH); // требуется 2 мс для запуска
-  delay(200);
+  delay(20);
 
   while (0 == (IDLE_IRQ_STAT & getIRQStatus())); // ждать запуска системы
 
