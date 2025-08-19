@@ -1,3 +1,5 @@
+### Code based on ATrappmann/PN5180-Library
+### https://github.com/ATrappmann/PN5180-Library
 
 ## Ошибки при UID
 
